@@ -2,59 +2,81 @@
 
 set -ouex pipefail
 
-### Install packages
+log() {
+    echo "=== $* ==="
+}
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/43/x86_64/repoview/index.html&protocol=https&redirect=1
-
-dnf5 -y remove plasma-workspace plasma-* kde-*
-
-dnf5 config-manager setopt terra.enabled=1
-dnf5 config-manager addrepo --from-repofile=https://repo.librewolf.net/librewolf.repo
-dnf5 config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-
-dnf5 -y install 				\
-	niri						\
-	ghostty						\
-	gnome-keyring				\
-	dolphin						\
-	xwayland-satellite			\
-	noctalia-shell				\
-	librewolf					\
-	ark							\
-	mako						\
-	mpv							\
-	unrar						\
-	gdm							\
-	xdg-desktop-portal-gtk		\
-	xdg-desktop-portal-gnome	\
-	cifs-utils					\
-	kio-fuse					\
-	kio-extras					\
-	dolphin-plugins				\
-	audiocd-kio					\
-	kf5-kimageformats			\
-	kdegraphics-thumbnailers	\
-	ffmpegthumbs				\
-	icoutils					\
-	taglib						\
-	cliphist					\
-	ddcutil						\
-	polkit-kde					\
-	gnome-keyring
+# --- 1. ENABLE REPOSITORIES ---
+# We enable Terra via the release RPM, and keep your other necessary Coprs
+log "Enabling Repositories (Terra, Ghostty, Niri)..."
 
 
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
+COPR_REPOS=(
+	pgdev/ghostty
+	ulysg/xwayland-satellite
+	yalter/niri
+)
+for repo in "${COPR_REPOS[@]}"; do
+	# Try to enable the repo, but don't fail the build if it doesn't support this Fedora version
+	if ! dnf5 -y copr enable "$repo" 2>&1; then
+		log "Warning: Failed to enable COPR repo $repo (may not support Fedora $RELEASE)"
+	fi
+done
 
-#### Example for enabling a System Unit File
+# Flip the enabled switch in the terra repo file
+sed -i '0,/enabled=0/s//enabled=1/' /etc/yum.repos.d/terra.repo
 
+# Now refresh the metadata so DNF "sees" the new packages
+dnf makecache
+
+# --- 2. DEFINE PACKAGE LISTS ---
+# Noctalia specific dependencies verified: swww for walls, playerctl for media,
+# bc for math/logic in some scripts, and the essential noctalia-qs fork.
+NIRI_PKGS=(
+    noctalia-shell
+    noctalia-qs
+    niri
+    playerctl
+    brightnessctl
+    ImageMagick
+    cava
+    cliphist
+    gnome-keyring
+    xdg-desktop-portal-gtk
+    xwayland-satellite
+    libqalculate
+    bc
+    python3
+    python3-pip
+    evolution-data-server
+    wlsunset
+)
+
+FONTS=(
+    adobe-source-code-pro-fonts
+    fontawesome-fonts-all
+)
+
+ADDITIONAL_SYSTEM_APPS=(
+    ghostty
+    firefox
+)
+
+# --- 3. INSTALL ALL PACKAGES ---
+log "Installing packages..."
+dnf5 install --setopt=install_weak_deps=False -y \
+    "${FONTS[@]}" \
+    "${NIRI_PKGS[@]}" \
+    "${ADDITIONAL_SYSTEM_APPS[@]}"
+
+
+
+# --- 5. CLEANUP ---
+log "Disabling Copr repos..."
+for repo in "${COPR_REPOS[@]}"; do
+    dnf5 -y copr disable "$repo"
+done
+
+# Enable essential background services
 systemctl enable podman.socket
-systemctl --global add-wants niri.service mako.service
-systemctl --global add-wants niri.service plasma-polkit-agent.service
+systemctl enable uupd.timer
