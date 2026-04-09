@@ -50,6 +50,8 @@ NIRI_PKGS=(
     python3-pip
     evolution-data-server
     wlsunset
+    fuzzel
+    mako
 )
 
 FONTS=(
@@ -59,7 +61,6 @@ FONTS=(
 
 ADDITIONAL_SYSTEM_APPS=(
     ghostty
-    firefox
 )
 
 # --- 3. INSTALL ALL PACKAGES ---
