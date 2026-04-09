@@ -52,10 +52,8 @@ NIRI_PKGS=(
     wlsunset
     fuzzel
     mako
-    vesktop
+    thunar
 )
-
-curl -fsSL "https://steambrew.app/install.sh" | bash
 
 FONTS=(
     adobe-source-code-pro-fonts
@@ -65,7 +63,7 @@ FONTS=(
 ADDITIONAL_SYSTEM_APPS=(
     ghostty
     firefox
-    
+    vesktop 
 )
 
 # --- 3. INSTALL ALL PACKAGES ---
