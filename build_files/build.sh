@@ -52,7 +52,10 @@ NIRI_PKGS=(
     wlsunset
     fuzzel
     mako
+    vesktop
 )
+
+curl -fsSL "https://steambrew.app/install.sh" | bash
 
 FONTS=(
     adobe-source-code-pro-fonts
