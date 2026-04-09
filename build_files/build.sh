@@ -57,10 +57,13 @@ NIRI_PKGS=(
 FONTS=(
     adobe-source-code-pro-fonts
     fontawesome-fonts-all
+    ttf-jetbrains-mono-nerd
 )
 
 ADDITIONAL_SYSTEM_APPS=(
     ghostty
+    firefox
+    
 )
 
 # --- 3. INSTALL ALL PACKAGES ---
