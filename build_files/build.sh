@@ -53,6 +53,8 @@ NIRI_PKGS=(
     fuzzel
     mako
     thunar
+    adw-gtk3-theme
+    nwg-look
 )
 
 FONTS=(
